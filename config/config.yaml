@@ -1,0 +1,47 @@
+server:
+  name: iot-server
+  port: 8080
+  mode: debug  # debug / release / test
+
+database:
+  driver: mysql
+  host: 120.220.73.200
+  port: 41306
+  username: root
+  password: root123456
+  dbname: iot_db
+  charset: utf8mb4
+  max_idle_conns: 10
+  max_open_conns: 100
+  log_level: info  # silent / error / warn / info
+
+redis:
+  host: 120.220.73.200
+  port: 41379
+  password: ""
+  db: 0
+  pool_size: 10
+
+kafka:
+  brokers:
+    - 120.220.73.200:41882
+  group_id: iot_group
+  retry_max: 3
+  timeout: 3  # seconds
+
+emqx:
+  broker: tcp://120.220.73.200:41880
+  client_id: iot_server
+  username: "iot_user"
+  password: "iotpod"
+  qos: 1
+  keepalive: 60  # seconds
+
+log:
+  level: debug  # debug / info / warn / error
+  format: json  # json / console
+  output: stdout
+  file_path: logs/app.log
+  max_size: 200    # MB
+  max_backups: 7
+  max_age: 30      # days

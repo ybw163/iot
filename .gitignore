@@ -1,0 +1,41 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Build output
+/bin/
+/dist/
+
+# Test binary
+*.test
+
+# Output of go coverage
+*.out
+
+# Dependency directories
+/vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*.codebuddy/
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+
+# Config with secrets (optional: uncomment if you want to exclude it)
+# config/config.yaml
+
+# Environment files
+.env
+.env.local
