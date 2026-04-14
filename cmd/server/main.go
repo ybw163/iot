@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"syscall"
 
-	"github.com/IBM/sarama"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
@@ -14,6 +13,7 @@ import (
 	"iot/internal/repository"
 	"iot/internal/router"
 	"iot/internal/service"
+	"iot/internal/stream"
 	"iot/pkg/config"
 	"iot/pkg/database"
 	"iot/pkg/logger"
@@ -63,20 +63,27 @@ func main() {
 	}
 	defer mqkafka.CloseConsumer()
 
-	// 启动 Kafka Consumer 订阅，消费消息并打印到控制台
+	// 初始化各层
+	deviceRepo := repository.NewDeviceRepository(database.DB)
+	deviceService := service.NewDeviceService(deviceRepo)
+	deviceHandler := handler.NewDeviceHandler(deviceService)
+
+	// 构建流处理管道（类似 Flink DAG）
+	pipeline := stream.NewPipeline()
+	pipeline.
+		AddProcessor(stream.NewDatabaseSink(deviceRepo)).    // Sink: 更新数据库
+		AddProcessor(stream.NewRedisCacheSink()).             // Sink: 写入 Redis 缓存
+		AddProcessor(stream.NewRiskControlProcessor())        // 算子: 风控检测
+
+	// 启动 Kafka Consumer 订阅，消息送入流处理管道
 	kafkaTopic := config.Conf.Kafka.Topic
-	if err := mqkafka.DefaultConsumer.Subscribe(context.Background(), kafkaTopic, func(msg *sarama.ConsumerMessage) error {
-		logger.Log.Info("consumed from kafka",
-			zap.String("topic", msg.Topic),
-			zap.Int32("partition", msg.Partition),
-			zap.Int64("offset", msg.Offset),
-			zap.String("data", string(msg.Value)),
-		)
-		return nil
-	}); err != nil {
+	if err := mqkafka.DefaultConsumer.Subscribe(context.Background(), kafkaTopic, stream.HandleKafkaMessage(pipeline)); err != nil {
 		logger.Log.Fatal("subscribe kafka topic failed", zap.Error(err))
 	}
-	logger.Log.Info("kafka consumer subscribed", zap.String("topic", kafkaTopic))
+	logger.Log.Info("kafka consumer subscribed with stream pipeline",
+		zap.String("topic", kafkaTopic),
+		zap.Int("pipeline_stages", 3),
+	)
 
 	// 初始化 EMQX
 	if err := mqemqx.Init(config.Conf.EMQX); err != nil {
@@ -88,11 +95,6 @@ func main() {
 	if err := mqemqx.StartConsumer(); err != nil {
 		logger.Log.Fatal("start emqx consumer failed", zap.Error(err))
 	}
-
-	// 初始化各层
-	deviceRepo := repository.NewDeviceRepository(database.DB)
-	deviceService := service.NewDeviceService(deviceRepo)
-	deviceHandler := handler.NewDeviceHandler(deviceService)
 
 	// 设置路由
 	gin.SetMode(config.Conf.Server.Mode)

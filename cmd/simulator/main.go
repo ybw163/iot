@@ -42,7 +42,7 @@ func main() {
 
 	// 模拟 TBOX 参数
 	vins := []string{
-		"LSGJA52U7HS123456",
+		"LSVAU2180N2012345",
 		"LSVAU2180N2012346",
 		"LSVAU2180N2012347",
 	}

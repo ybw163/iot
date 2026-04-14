@@ -28,9 +28,9 @@ func (r *DeviceRepository) GetByID(ctx context.Context, id uint) (*model.Device,
 	return &device, nil
 }
 
-func (r *DeviceRepository) GetByDeviceKey(ctx context.Context, deviceKey string) (*model.Device, error) {
+func (r *DeviceRepository) GetByVin(ctx context.Context, vin string) (*model.Device, error) {
 	var device model.Device
-	if err := r.db.WithContext(ctx).Where("device_key = ?", deviceKey).First(&device).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("vin = ?", vin).First(&device).Error; err != nil {
 		return nil, err
 	}
 	return &device, nil
