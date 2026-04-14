@@ -11,7 +11,7 @@ type Config struct {
 	Server   ServerConfig   `mapstructure:"server"`
 	Database DatabaseConfig `mapstructure:"database"`
 	Redis    RedisConfig    `mapstructure:"redis"`
-	Kafka KafkaConfig `mapstructure:"kafka"`
+	Kafka    KafkaConfig    `mapstructure:"kafka"`
 	EMQX     EMQXConfig     `mapstructure:"emqx"`
 	Log      LogConfig      `mapstructure:"log"`
 }
@@ -54,6 +54,7 @@ func (r *RedisConfig) Addr() string {
 
 type KafkaConfig struct {
 	Brokers  []string `mapstructure:"brokers"`
+	Topic    string   `mapstructure:"topic"`
 	GroupID  string   `mapstructure:"group_id"`
 	RetryMax int      `mapstructure:"retry_max"`
 	Timeout  int      `mapstructure:"timeout"`
@@ -64,12 +65,15 @@ func (k *KafkaConfig) BrokersString() string {
 }
 
 type EMQXConfig struct {
-	Broker    string `mapstructure:"broker"`
-	ClientID  string `mapstructure:"client_id"`
-	Username  string `mapstructure:"username"`
-	Password  string `mapstructure:"password"`
-	QoS       byte   `mapstructure:"qos"`
-	KeepAlive int    `mapstructure:"keepalive"`
+	Broker     string `mapstructure:"broker"`
+	ClientID   string `mapstructure:"client_id"`
+	Username   string `mapstructure:"username"`
+	Password   string `mapstructure:"password"`
+	QoS        byte   `mapstructure:"qos"`
+	KeepAlive  int    `mapstructure:"keepalive"`
+	TLSEnabled bool   `mapstructure:"tls_enabled"`
+	CACert     string `mapstructure:"ca_cert"`
+	Topic      string `mapstructure:"topic"`
 }
 
 type LogConfig struct {

@@ -25,6 +25,7 @@ redis:
 kafka:
   brokers:
     - 120.220.73.200:41882
+  topic: tbox_telemetry
   group_id: iot_group
   retry_max: 3
   timeout: 3  # seconds
@@ -36,6 +37,9 @@ emqx:
   password: "iotpod"
   qos: 1
   keepalive: 60  # seconds
+  tls_enabled: false
+  ca_cert: ""    # TLS CA 证书路径，tls_enabled=true 时需要
+  topic: "tbox_telemetry"  # 订阅主题，支持通配符
 
 log:
   level: debug  # debug / info / warn / error

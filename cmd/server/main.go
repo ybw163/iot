@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"syscall"
 
+	"github.com/IBM/sarama"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
@@ -61,11 +63,31 @@ func main() {
 	}
 	defer mqkafka.CloseConsumer()
 
+	// 启动 Kafka Consumer 订阅，消费消息并打印到控制台
+	kafkaTopic := config.Conf.Kafka.Topic
+	if err := mqkafka.DefaultConsumer.Subscribe(context.Background(), kafkaTopic, func(msg *sarama.ConsumerMessage) error {
+		logger.Log.Info("consumed from kafka",
+			zap.String("topic", msg.Topic),
+			zap.Int32("partition", msg.Partition),
+			zap.Int64("offset", msg.Offset),
+			zap.String("data", string(msg.Value)),
+		)
+		return nil
+	}); err != nil {
+		logger.Log.Fatal("subscribe kafka topic failed", zap.Error(err))
+	}
+	logger.Log.Info("kafka consumer subscribed", zap.String("topic", kafkaTopic))
+
 	// 初始化 EMQX
 	if err := mqemqx.Init(config.Conf.EMQX); err != nil {
 		logger.Log.Fatal("init emqx failed", zap.Error(err))
 	}
 	defer mqemqx.Close()
+
+	// 启动 EMQX 消费者（订阅 TBOX 遥测消息）
+	if err := mqemqx.StartConsumer(); err != nil {
+		logger.Log.Fatal("start emqx consumer failed", zap.Error(err))
+	}
 
 	// 初始化各层
 	deviceRepo := repository.NewDeviceRepository(database.DB)
